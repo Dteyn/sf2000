@@ -128,7 +128,7 @@
     
           		// Add a button to trigger the patching process
           		html += "<div class=\"controlContainer\"><button id=\"patchButton\">Disable Wireless</button></div>";
-    
+    	      break;
           
           // Wireless Disabled, let's enable it!
           case 0x80:
@@ -139,11 +139,10 @@
     
           		// Add a button to trigger the patching process
           		html += "<div class=\"controlContainer\"><button id=\"patchButton\">Enable Wireless</button></div>";
-    
+	      break;
           
-          // If we've landed here, the firmware has correctly been identified, yet for some reason, the wireless control code at the specified offset doesn't match either 0x80 or 0x92. We cannot proceed.      
-          else {
-    
+	  default:
+	    // If we've landed here, the firmware has correctly been identified, yet for some reason, the wireless control code at the specified offset doesn't match either 0x80 or 0x92. We cannot proceed.          
             setMessage("error", "bisrvMessages", "ERROR: While the file you've selected does appear to be generally structured like the SF2000's <code>bisrv.asd</code> BIOS file, and was correctly identified, the wireless control code doesn't match what is expected (0x92 or 0x80). As such, this tool cannot safely modify the selected file.");
             return;
           }
