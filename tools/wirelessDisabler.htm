@@ -146,7 +146,6 @@
             setMessage("error", "bisrvMessages", "ERROR: While the file you've selected does appear to be generally structured like the SF2000's <code>bisrv.asd</code> BIOS file, and was correctly identified, the wireless control code doesn't match what is expected (0x92 or 0x80). As such, this tool cannot safely modify the selected file.");
             return;
           }
-        }
 
         // Close our section...
         html += "</section>";
@@ -177,7 +176,7 @@
         });
       }
 
-     // function stepThree() {
+     function stepThree() {
         var html = "<section id=\"downloadSection\"><h2>Step 3: Download Updated <code>bisrv.asd</code></h2><p>Click the download button for the updated <code>bisrv.asd</code> file; use it to replace the one in the <code>bios</code> folder on your SF2000's microSD card.</p><div id=\"downloadMessages\"></div>";
 
 		// Add our download button...
