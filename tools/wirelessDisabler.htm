@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <title>Data Frog SF2000 Wireless Toggler</title>
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" href="tools.css">
+  </head>
+  <body>
+    <h1>Data Frog SF2000 Battery Meter Fix</h1>
+    <p>This tool can be used to disable or enable the built-in wireless receiver in the Data Frog SF2000, to save battery life when not being used with the wireless controllers. Please note this tool is provided as-is, and no support will be given if this corrupts your device's bios; make sure you have backups of anything you care about before messing with your device's critical files! 🙂</p>
+    <p><strong>NOTE:</strong>By default, the wireless is Enabled. This tool mainly used to disable the wireless, but can also be used to re-enable the wireless feature. This tool will detect whether the wireless disable patch has been applied, and if so, will re-enable the wireless.</p>
+    <hr>
+    <div id="steps">
+      <section id="bisrvSection">
+        <h2>Step 1: Select Original <code>bisrv.asd</code></h2>
+        <p>Select the <code>bisrv.asd</code> file you want to disable wireless on. You should probably make a backup of the file first, just in case! You can find the <code>bisrv.asd</code> file in the <code>bios</code> folder on your microSD card.</p>
+        <div id="bisrvMessages"></div>
+        <div class="controlContainer">
+          <label class="control">Open <code>bisrv.asd</code>: <input id="bisrvSelector" type="file" accept=".asd" onchange="bisrvLoad(event.target.files[0])"></label>
+        </div>
+      </section>
+    </div>
+    <script src="tools.js"></script>
+    <script type="text/javascript">
+
+      // Global variables...
+      var bisrvData;            // Used to store the binary data from the bisrv.asd file
+      var wiCodeOffset;         // Will contain the offsets of the wireless control routine within the bisrv.asd file
+      var wiPatchValue;         // Will contain the value to patch to the binary
+
+      // This function is triggered when the person selects a file in Step 1...
+      function bisrvLoad(file) {
+
+        // Read in the contents of the selected file as array buffer...
+        var frBisrv = new FileReader();
+        frBisrv.readAsArrayBuffer(file);
+        frBisrv.onload = function(event) {
+
+          // Clear out any HTML that might already exist after Step 1...
+          while(document.getElementById("bisrvSection").nextSibling) {
+            document.getElementById("bisrvSection").nextSibling.remove();
+          }
+
+          // Clear any old messages...
+          document.getElementById("bisrvMessages").innerHTML = "";
+
+          // Read the provided file's data into an array...
+          bisrvData = new Uint8Array(event.target.result);
+
+          // We'll do a hash-check against it...
+          hashResult = getFirmwareHash(bisrvData);
+
+          // The result could be either a Promise if it had a bisrv.asd-like structure and we got
+          // a hash, or false otherwise... let's check!
+          if (hashResult instanceof Promise) {
+
+            // We got a Promise! Wait for it to finish so we get our bisrv.asd hash...
+            hashResult.then(function(dataHash) {
+
+              // Check the hash against all the known good ones...
+              switch (knownHash(dataHash)) {
+
+				// Mid-March BIOS...
+				case "03.15":
+				  wiCodeOffset = 0x35C3A2;
+				  setMessage("info", "bisrvMessages", "INFO: Mid-March <code>bisrv.asd</code> detected.");
+				  break;
+
+				// April 20th BIOS...
+				case "04.20":
+				  wiCodeOffset = 0x35C3FE;
+				  setMessage("info", "bisrvMessages", "INFO: April 20th <code>bisrv.asd</code> detected.");
+				  break;
+
+				// May 15th BIOS...
+				case "05.15":
+				  wiCodeOffset = 0x35E236;
+				  setMessage("info", "bisrvMessages", "INFO: May 15th <code>bisrv.asd</code> detected.");
+				  break;
+
+				// May 22nd BIOS...
+				case "05.22":
+				  wiCodeOffset = 0x35E23A;
+				  setMessage("info", "bisrvMessages", "INFO: May 22nd <code>bisrv.asd</code> detected.");
+				  break;
+
+				// August 3rd BIOS...
+				case "08.03":
+				  wiCodeOffset = 0x357F7E;
+				  setMessage("info", "bisrvMessages", "INFO: August 3rd <code>bisrv.asd</code> detected.");
+				  break;
+
+                default:
+                  // Huh... wasn't false so had bisrv.asd structure, but didn't return
+                  // a known hash... a new BIOS version? Unknown anyway!
+                  console.log(dataHash);
+                  setMessage("error", "bisrvMessages", "ERROR: While the file you've selected does appear to be generally structured like the SF2000's <code>bisrv.asd</code> BIOS file, the specifics of your file don't match any known SF2000 BIOS version. As such, this tool cannot safely modify the selected file.");
+                  return;
+              }
+
+              // If we're here we've got a good file, so onwards to Step 2 (checking and applying the appropriate patch)...
+              stepTwo();
+            });
+          }
+          else {
+
+            // We got false, so whatever it was, it wasn't a bisrv.asd...
+            setMessage("error", "bisrvMessages", "ERROR: The file you've selected doesn't appear to have the same data structure as expected for a <code>bisrv.asd</code> file.");
+            return;
+          }
+        };
+      }
+
+      // This function triggers when the user has selected a known `bisrv.asd`
+      // variant...
+      function stepTwo() {
+
+        // First, let's check the wireless code offset to see which value resides there...
+        switch wiCodeOffset() {
+    
+          // Wireless Enabled, let's disable it!
+          case 0x92:
+    
+              wiPatchValue = 0x80;  // We'll be patching 0x80 to the wiCodeOffset which will DISABLE the wireless
+          
+              var html = "<section id=\"patchSection\"><h2>Wireless Presently Enabled</h2><p>The wireless control code is presently enabled. To download a version with the Wireless Disabled, click the Download button below.</p><div id=\"patchMessages\"></div>";
+    
+          		// Add a button to trigger the patching process
+          		html += "<div class=\"controlContainer\"><button id=\"patchButton\">Disable Wireless</button></div>";
+    
+          
+          // Wireless Disabled, let's enable it!
+          case 0x80:
+    
+              wiPatchValue = 0x92;  // We'll be patching 0x92 to the wiCodeOffset which will ENABLE the wireless
+          
+              var html = "<section id=\"patchSection\"><h2>Wireless Presently Disabled</h2><p>The wireless control code is presently disabled. To download a version with the Wireless Enabled, click the Download button below.</p><div id=\"patchMessages\"></div>";
+    
+          		// Add a button to trigger the patching process
+          		html += "<div class=\"controlContainer\"><button id=\"patchButton\">Enable Wireless</button></div>";
+    
+          
+          // If we've landed here, the firmware has correctly been identified, yet for some reason, the wireless control code at the specified offset doesn't match either 0x80 or 0x92. We cannot proceed.      
+          else {
+    
+            setMessage("error", "bisrvMessages", "ERROR: While the file you've selected does appear to be generally structured like the SF2000's <code>bisrv.asd</code> BIOS file, and was correctly identified, the wireless control code doesn't match what is expected (0x92 or 0x80). As such, this tool cannot safely modify the selected file.");
+            return;
+          }
+        }
+
+        // Close our section...
+        html += "</section>";
+
+        // Finally, add a <hr> separator after the last step, and append the new step...
+        document.getElementById("steps").insertAdjacentHTML("beforeend", "<hr>");
+        document.getElementById("steps").insertAdjacentHTML("beforeend", html);
+
+        // Attach our event handler to our new button...
+        var patchButton = document.getElementById("patchButton");
+        patchButton.addEventListener("click", function() {
+		
+		      // The user has clicked the button to patch, let's proceed!
+		  
+		      // First let's clear any old messages...
+          document.getElementById("patchMessages").innerHTML = "";
+
+          // And clear up any HTML already added after the current step...
+          while(document.getElementById("patchSection").nextSibling) {
+            document.getElementById("patchSection").nextSibling.remove();
+          }
+		
+          // Finally, let's apply the patch to the wireless control code to enable or disable wireless based on what the user chose above
+		      bisrvData[wiCodeOffset] = wiPatchValue;
+			
+          // On to Step 3!
+          stepThree();
+        });
+      }
+
+     // function stepThree() {
+        var html = "<section id=\"downloadSection\"><h2>Step 3: Download Updated <code>bisrv.asd</code></h2><p>Click the download button for the updated <code>bisrv.asd</code> file; use it to replace the one in the <code>bios</code> folder on your SF2000's microSD card.</p><div id=\"downloadMessages\"></div>";
+
+		// Add our download button...
+        html += "<div class=\"controlContainer\"><div class=\"control\"><input id=\"userDownload\" type=\"button\" value=\"Download\"></div></div>";
+
+        // Close our section...
+        html += "</section>";
+
+        // Finally, add a <hr> separator after the last step, and append the new step...
+        document.getElementById("steps").insertAdjacentHTML("beforeend", "<hr>");
+        document.getElementById("steps").insertAdjacentHTML("beforeend", html);
+
+        // Let's add the event handler for our Download button...
+        var dButton = document.getElementById("userDownload");
+        dButton.addEventListener("click", function() {
+
+		  // So, we should now have the patched bisrv.asd data in bisrvData; all that's left
+		  // to do is re-calculate the CRC32 bytes for the modified file and set them in the
+		  // data, and send the data to the user's browser. Easy!
+
+          // Next, we calculate a new CRC32 for the updated bisrv.asd and apply it...
+          patchCRC32(bisrvData);
+
+          // And finally, send the data to the user's browser as a file download...
+          downloadToBrowser(bisrvData, "application/octet-stream", "bisrv.asd");
+
+        });
+      }
+    </script>
+    <hr>
+    <p><a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>: public domain. Version 1.0, 20230901.1</p>
+  </body>
+</html>
