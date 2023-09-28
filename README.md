@@ -1,4 +1,9 @@
-# SF2000
+# NOTE
+This repo is a fork of the main reposotiory, hosted here: https://vonmillhausen.github.io/sf2000/
+
+Please refer to the above link for the most up-to-date information regarding the SF2000 retro handheld.
+
+## SF2000
 The SF2000 is a cheap hand-held emulation gaming console which was released in early 2023. Although the device itself is sold by a variety of vendors, it was the vendor "Data Frog" who caught public attention, and so the device is often simply referred to as "the Data Frog".
 
 This document is a collection of notes and information I've made about the device.
