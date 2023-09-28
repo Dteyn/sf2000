@@ -1,5 +1,5 @@
 # NOTE
-This repo is a fork of the main reposotiory, hosted here: https://vonmillhausen.github.io/sf2000/
+This repo is a fork of the main repository, hosted here: https://vonmillhausen.github.io/sf2000/
 
 Please refer to the above link for the most up-to-date information regarding the SF2000 retro handheld.
 
