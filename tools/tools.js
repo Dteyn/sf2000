@@ -265,9 +265,9 @@ function knownHash(hash) {
     case "5335860d13214484eeb1260db8fe322efc87983b425ac5a5f8b0fcdf9588f40a":
       return "08.03";
       
-	  // Add support for kobil's multicore (dated 10-05-23 from SF2000 Dev thread on Retro Handhelds Discord)
+    // Add support for kobil's multicore (dated 10-05-23 from SF2000 Dev thread on Retro Handhelds Discord)
     case "c666a8372418daf3570277347255d99349a9e137df7b4d730a95d4447e3e3615":
-	  return "08.03";
+      return "08.03";
       
     default:
       return false;
