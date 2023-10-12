@@ -12,6 +12,17 @@
   Just like the tools themselves, this file should be considered CC0 Public
   Domain (https://creativecommons.org/publicdomain/zero/1.0/)
 
+  Version 1.5: Added support for the (broken) October 7th BIOS in
+    getFirmwareHash() and knownHash()
+
+  Version 1.4: Re-ordered the getFirmwareHash() zeroing-out checks to match the
+    expected order to find them in in the BIOS file - just some future-proofing
+    in case some user-substituted content (e.g., a boot logo) happens to contain
+    bytes that a subsequent call to findSequence() might accidentally match. I
+    also added some comments with the rough location of each block within the
+    file, so if I have to add something else in the future I'll be able to slide
+    it into the right place :)
+
   Version 1.3: Added support for blanking out the SNES audio bitrate and cycles
     bits that `bnister` identified as a workaround for the "start-SNES-games-
     twice" issue that cropped up in firmware versions after March
@@ -63,45 +74,16 @@ function getFirmwareHash(data) {
   if (dataCopy.length > 12600000) {
 
     // First, replace CRC32 bits with 00...
-    dataCopy[396] = 0x00;
-    dataCopy[397] = 0x00;
-    dataCopy[398] = 0x00;
-    dataCopy[399] = 0x00;
-
-    // Next identify the boot logo position, and blank it out too...
-    var badExceptionOffset = findSequence([0x62, 0x61, 0x64, 0x5F, 0x65, 0x78, 0x63, 0x65, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x00, 0x00, 0x00], dataCopy);
-    if (badExceptionOffset > -1) {
-      var bootLogoStart = badExceptionOffset + 16;
-      for (var i = bootLogoStart; i < (bootLogoStart + 204800); i++) {
-        dataCopy[i] = 0x00;
-      }
-    }
-    else {
-      return false;
-    }
-
-    // Next identify the emulator button mappings (if they exist), and blank
-    // them out too...
-    var preButtonMapOffset = findSequence([0x00, 0x00, 0x00, 0x71, 0xDB, 0x8E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], dataCopy);
-    if (preButtonMapOffset > -1) {
-      var postButtonMapOffset = findSequence([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00], dataCopy, preButtonMapOffset);
-      if (postButtonMapOffset > -1) {
-        for (var i = preButtonMapOffset + 16; i < postButtonMapOffset; i++) {
-          dataCopy[i] = 0x00;
-        }
-      }
-      else {
-        return false;
-      }
-    }
-    else {
-      return false;
-    }
+    dataCopy[0x18C] = 0x00;
+    dataCopy[0x18D] = 0x00;
+    dataCopy[0x18E] = 0x00;
+    dataCopy[0x18F] = 0x00;
 
     // Next we'll look for (and zero out) the five bytes that the power
     // monitoring functions of the SF2000 use for switching the UI's battery
     // level indicator. These unfortunately can't be searched for - they're just
     // in specific known locations for specific firmware versions...
+    // Location: Approximately 0x35A8F8 (about 25% of the way through the file)
     var prePowerCurve = findSequence([0x11, 0x05, 0x00, 0x02, 0x24], dataCopy);
     if (prePowerCurve > -1) {
       var powerCurveFirstByteLocation = prePowerCurve + 5;
@@ -150,6 +132,15 @@ function getFirmwareHash(data) {
           dataCopy[0x356594] = 0x00;
           dataCopy[0x3565B0] = 0x00;
           break;
+        
+        case 0x356638:
+          // Seems to match October 7th layout...
+          dataCopy[0x356638] = 0x00;
+          dataCopy[0x356640] = 0x00;
+          dataCopy[0x3566D8] = 0x00;
+          dataCopy[0x3566E0] = 0x00;
+          dataCopy[0x3566FC] = 0x00;
+          break;
       
         default:
           return false;
@@ -159,9 +150,42 @@ function getFirmwareHash(data) {
       return false;
     }
 
+    // Next identify the emulator button mappings (if they exist), and blank
+    // them out too...
+    // Location: Approximately 0x8D6200 (about 75% of the way through the file)
+    var preButtonMapOffset = findSequence([0x00, 0x00, 0x00, 0x71, 0xDB, 0x8E, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00], dataCopy);
+    if (preButtonMapOffset > -1) {
+      var postButtonMapOffset = findSequence([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00], dataCopy, preButtonMapOffset);
+      if (postButtonMapOffset > -1) {
+        for (var i = preButtonMapOffset + 16; i < postButtonMapOffset; i++) {
+          dataCopy[i] = 0x00;
+        }
+      }
+      else {
+        return false;
+      }
+    }
+    else {
+      return false;
+    }
+
+    // Next identify the boot logo position, and blank it out too...
+    // Location: Approximately 0x9B3520 (about 80% of the way through the file)
+    var badExceptionOffset = findSequence([0x62, 0x61, 0x64, 0x5F, 0x65, 0x78, 0x63, 0x65, 0x70, 0x74, 0x69, 0x6F, 0x6E, 0x00, 0x00, 0x00], dataCopy);
+    if (badExceptionOffset > -1) {
+      var bootLogoStart = badExceptionOffset + 16;
+      for (var i = bootLogoStart; i < (bootLogoStart + 204800); i++) {
+        dataCopy[i] = 0x00;
+      }
+    }
+    else {
+      return false;
+    }
+
     // Next we'll look for and zero out the bytes used for SNES audio rate and
     // CPU cycles, in case folks want to patch those bytes to correct SNES
     // first-launch issues on newer firmwares...
+    // Location: Approximately 0xC0A170 (about 99% of the way through the file)
     var preSNESBytes = findSequence([0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0x80], dataCopy);
     if (preSNESBytes > -1) {
       var snesAudioBitrateBytes = preSNESBytes + 8;
@@ -264,11 +288,14 @@ function knownHash(hash) {
 
     case "5335860d13214484eeb1260db8fe322efc87983b425ac5a5f8b0fcdf9588f40a":
       return "08.03";
-      
+
     // Add support for kobil's multicore (dated 10-05-23 from SF2000 Dev thread on Retro Handhelds Discord)
     case "c666a8372418daf3570277347255d99349a9e137df7b4d730a95d4447e3e3615":
-      return "08.03";
-      
+      return "08.03";      
+    
+    case "b88458bf2c25d3a34ab57ee149f36cfdc6b8a5138d5c6ed147fbea008b4659db":
+      return "10.07"
+
     default:
       return false;
   }
