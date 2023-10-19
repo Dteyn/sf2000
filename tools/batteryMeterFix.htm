@@ -119,6 +119,26 @@
 				  setMessage("info", "bisrvMessages", "INFO: August 3rd <code>bisrv.asd</code> detected.");
 				  break;
 
+				// October 7th BIOS...
+				case "10.07":
+				  battLevelOffset[0] = 0x356638;
+				  battLevelOffset[1] = 0x356640;
+				  battLevelOffset[2] = 0x3566D8;
+				  battLevelOffset[3] = 0x3566E0;
+				  battLevelOffset[4] = 0x3566FC;
+				  setMessage("info", "bisrvMessages", "INFO: October 7th <code>bisrv.asd</code> detected. NOTE: This version of firmware has a major bug - SNES save states do not work. Recommend upgrading to October 13th or later BIOS.");
+				  break;
+			      
+				// October 13th BIOS...
+				case "10.13":
+				  battLevelOffset[0] = 0x356638;
+				  battLevelOffset[1] = 0x356640;
+				  battLevelOffset[2] = 0x3566D8;
+				  battLevelOffset[3] = 0x3566E0;
+				  battLevelOffset[4] = 0x3566FC;
+				  setMessage("info", "bisrvMessages", "INFO: October 13th <code>bisrv.asd</code> detected.");
+				  break;			      
+
                 default:
                   // Huh... wasn't false so had bisrv.asd structure, but didn't return
                   // a known hash... a new BIOS version? Unknown anyway!
