@@ -92,9 +92,19 @@
 				case "08.03":
 				  SampleRateOffset = 0xC0A178;
 				  CyclesPctOffset = 0xC0A180;
-				  setMessage("info", "bisrvMessages", "INFO: August 3rd <code>bisrv.asd</code> (v1.6) detected. This is the current firmware version.");
+				  setMessage("info", "bisrvMessages", "INFO: August 3rd <code>bisrv.asd</code> (v1.6) detected.");
 				  break;
+			      
+                                // October 7th BIOS...
+		                case "10.07":
+			      	  setMessaage("warning", "bisrvMessage", "October 7th <code>bisrv.asd</code> (v1.7) detected. This version does not require the SNES emulator fix. This BIOS version also has a bug with SNES save states and is not recommended to be used. Upgrade to the October 13th BIOS (v1.71) instead.");
+                                  return;
 
+			        // October 13th BIOS...
+		                case "10.13":
+			          setMessage("warning", "bisrvMessage", "October 13th <code>bisrv.asd</code> (v1.71) detected. This version does not require the SNES emulator fix.");
+			          return;
+			      
                 default:
                   // Huh... wasn't false so had bisrv.asd structure, but didn't return
                   // a known hash... a new BIOS version? Unknown anyway!
