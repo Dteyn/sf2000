@@ -7,7 +7,14 @@
   Source: https://github.com/vonmillhausen/sf2000/blob/main/tools/tools.js
 
   Version 1.0: Initial version
-   - Updated hashing function for GB300 firmware specific differences
+	- Updated hashing function for GB300 firmware specific differences
+	- Reduced the data length check to 7200000 bytes
+	- Removed the power monitoring bytes zeroing, since there is currently no patch for that on GB300
+	- Confirmed the emulator button mapping zeroing code works fine with GB300 and left it intact (location: 0x5f2880)
+	- Updated how the boot logo is located and zeroed to be compatible with GB300
+	  - For SF2000, we were searching for `bad_exception`, however on the GB300, there is additional data following that instead of the boot logo.
+	  - Instead, we search for `fundamental_type_info`, and add 2 bytes to get the location of the boot logo (location: 0x670a54 to 0x69b253)
+	- Implemented new zeroing of the LCD patch, in case the user has applied the GB300 LCD patch for using the SF2000 LCD in the GB300 (location: 0x6cbfa4)
 
 */
 
