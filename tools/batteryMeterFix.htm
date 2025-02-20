@@ -10,7 +10,7 @@
     <h1>Data Frog SF2000 Battery Meter Fix</h1>
     <p>This tool can be used to fix the battery meter on an SF2000 handheld gaming console so that it better represents the charge status of the stock battery. Please note this tool is provided as-is, and no support will be given if this corrupts your device's bios; make sure you have backups of anything you care about before messing with your device's critical files! 🙂</p>
 	<p><strong>Note:</strong> This patch is primarily designed to fix the battery meter when using the stock battery that comes with the SF2000. If you have installed a larger mAh battery (3000mAh+), this patch is not needed.</p>
-	  <p>For more information on the Battery Meter Fix, see this page: <a href="https://github.com/Dteyn/SF2000_Battery_Level_Patcher">https://github.com/Dteyn/SF2000_Battery_Level_Patcher</a></p>
+    <p>For more information on the Battery Meter Fix, see this page: <a href="https://github.com/Dteyn/SF2000_Battery_Level_Patcher">https://github.com/Dteyn/SF2000_Battery_Level_Patcher</a></p>
     <hr>
     <div id="steps">
       <section id="bisrvSection">
@@ -22,8 +22,14 @@
         </div>
       </section>
     </div>
-    <script src="tools.js"></script>
+    <script src="tools-v17.js"></script>
     <script type="text/javascript">
+      // SF2000 Battery Meter Fix by Dteyn
+      // Based on bootLogoChanger by VonMillhausen: https://github.com/vonmillhausen/sf2000/blob/main/tools/bootLogoChanger.htm
+
+      // CHANGELOG:
+	  // v1.0 - 2023/09/01 - Initial Release
+	  // v1.1 - 2025/02/11 - Added support for October 7th/13th firmware (using VonMillhausen's updated tools.js version 1.7)
 
       // Global variables...
       var bisrvData;             // Used to store the binary data from the bisrv.asd file
@@ -119,17 +125,17 @@
 				  setMessage("info", "bisrvMessages", "INFO: August 3rd <code>bisrv.asd</code> detected.");
 				  break;
 
-				// October 7th BIOS...
+				// October 7 BIOS...
 				case "10.07":
 				  battLevelOffset[0] = 0x356638;
 				  battLevelOffset[1] = 0x356640;
 				  battLevelOffset[2] = 0x3566D8;
 				  battLevelOffset[3] = 0x3566E0;
 				  battLevelOffset[4] = 0x3566FC;
-				  setMessage("info", "bisrvMessages", "INFO: October 7th <code>bisrv.asd</code> detected. NOTE: This version of firmware has a major bug - SNES save states do not work. Recommend upgrading to October 13th or later BIOS.");
+				  setMessage("warning", "bisrvMessages", "WARNING: October 7th <code>bisrv.asd</code> detected. The October 7th <code>bisrv.asd</code> version has a bug and should not be used!\nYou can update to October 13th (v1.71) by grabbing the bisrv.asd here: <a target='_blank' href='https://github.com/Dteyn/Datafrog_SF2000_Vanilla/releases/download/v1.71/bisrv-v1.71-10_13.zip'>bisrv-v1.71-10_13.zip</a>");
 				  break;
-			      
-				// October 13th BIOS...
+
+				// October 13 BIOS...
 				case "10.13":
 				  battLevelOffset[0] = 0x356638;
 				  battLevelOffset[1] = 0x356640;
@@ -137,7 +143,7 @@
 				  battLevelOffset[3] = 0x3566E0;
 				  battLevelOffset[4] = 0x3566FC;
 				  setMessage("info", "bisrvMessages", "INFO: October 13th <code>bisrv.asd</code> detected.");
-				  break;			      
+				  break;
 
                 default:
                   // Huh... wasn't false so had bisrv.asd structure, but didn't return
@@ -239,6 +245,6 @@
       }
     </script>
     <hr>
-    <p><a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>: public domain. Version 1.1, 20231018.1</p>
+    <p><a rel="license" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>: public domain. Version 1.1, 20250219.1</p>
   </body>
 </html>
